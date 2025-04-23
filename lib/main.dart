@@ -1,13 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mental_health_support_app/ui/screens/feature_screen.dart';
 import 'firebase_options.dart'; // Import the generated file
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
-import 'ui/welcome_screen.dart'; // Import WelcomeScreen
-import 'ui/sign_up_screen.dart'; // Import SignUpScreen
-import 'ui/login_screen.dart'; // Import LoginScreen
-import 'ui/home_page.dart'; // Import HomePage
+import 'ui/screens/welcome_screen.dart'; // Import WelcomeScreen
+import 'ui/screens/sign_up_screen.dart'; // Import SignUpScreen
+import 'ui/screens/login_screen.dart'; // Import LoginScreen
 import 'package:google_fonts/google_fonts.dart';
 
 // Create a global function to check token expiration
@@ -99,23 +99,23 @@ class _MyAppState extends State<MyApp> {
       title: 'Employee Mental Health Support',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: GoogleFonts.cambo().fontFamily, // Apply cambo as the default font
+        fontFamily: GoogleFonts.cambo().fontFamily, // Apply roboto as the default font
         textTheme: TextTheme(
-          // Use chivo for headings and cambo for the rest
-          displayLarge: GoogleFonts.chivo(),
-          displayMedium: GoogleFonts.chivo(),
-          displaySmall: GoogleFonts.chivo(),
-          headlineLarge: GoogleFonts.chivo(),
-          headlineMedium: GoogleFonts.chivo(),
-          headlineSmall: GoogleFonts.chivo(),
-          titleLarge: GoogleFonts.chivo(),
-          titleMedium: GoogleFonts.chivo(),
-          titleSmall: GoogleFonts.chivo(),
-          bodyLarge: GoogleFonts.cambo(),  // Default font
-          bodyMedium: GoogleFonts.cambo(), // Default font
-          labelLarge: GoogleFonts.cambo(), // Default font
-          labelMedium: GoogleFonts.cambo(),// Default font
-          labelSmall: GoogleFonts.cambo(),  // Default font
+          // Use roboto for headings and cambo for the rest
+          displayLarge: GoogleFonts.roboto(),
+          displayMedium: GoogleFonts.roboto(),
+          displaySmall: GoogleFonts.roboto(),
+          headlineLarge: GoogleFonts.roboto(),
+          headlineMedium: GoogleFonts.roboto(),
+          headlineSmall: GoogleFonts.roboto(),
+          titleLarge: GoogleFonts.roboto(),
+          titleMedium: GoogleFonts.roboto(),
+          titleSmall: GoogleFonts.roboto(),
+          bodyLarge: GoogleFonts.roboto(),  // Default font
+          bodyMedium: GoogleFonts.roboto(), // Default font
+          labelLarge: GoogleFonts.roboto(), // Default font
+          labelMedium: GoogleFonts.roboto(),// Default font
+          labelSmall: GoogleFonts.roboto(),  // Default font
         ),
       ),
       initialRoute: '/', // Set WelcomeScreen as the initial route
@@ -123,7 +123,7 @@ class _MyAppState extends State<MyApp> {
         '/': (context) => const WelcomeScreen(), // Define WelcomeScreen route
         '/signup': (context) => const SignUpScreen(), // Define SignUpScreen route
         '/login': (context) => const LoginScreen(), // Define LoginScreen route
-        '/home': (context) => const HomePage(),
+        '/home': (context) => FeaturePage(),
       },
     );
   }

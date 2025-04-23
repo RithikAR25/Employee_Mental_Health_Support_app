@@ -154,66 +154,71 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30.0),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(), // Use outlined input border
-                      prefixIcon: Icon(Icons.email),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFff8600)),
+                  SizedBox(
+                    height: 50.0,
+                    child: TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(), // Use outlined input border
+                        prefixIcon: Icon(Icons.email),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFff8600)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black, width: 2.0),
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black, width: 2.0),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty || !value.contains('@')) {
+                          return 'Please enter a valid email.';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
-                        return 'Please enter a valid email.';
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(), // Use outlined input border
-                      prefixIcon: const Icon(Icons.lock),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFff8600)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black, width: 2.0),
-                      ),
-                      suffixIcon: IconButton(  // Password visibility toggle
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                    SizedBox(height: 50.0,
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border: const OutlineInputBorder(), // Use outlined input border
+                          prefixIcon: const Icon(Icons.lock),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFff8600)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black, width: 2.0),
+                          ),
+                          suffixIcon: IconButton(  // Password visibility toggle
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
+                        validator: (value) {
+                          if (value == null || value.isEmpty || value.length < 6) {
+                            return 'Password must be at least 6 characters.';
+                          }
+                          return null;
                         },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty || value.length < 6) {
-                        return 'Password must be at least 6 characters.';
-                      }
-                      return null;
-                    },
-                  ),
                   const SizedBox(height: 24.0),
                   ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15.0),
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
