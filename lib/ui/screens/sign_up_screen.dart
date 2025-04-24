@@ -152,13 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/bgimage/peak_background.jpg'),
-            // Use the same background
-            fit: BoxFit.cover,
-          ),
-        ),
+        decoration: const BoxDecoration(color: Colors.white),
 
         padding: const EdgeInsets.all(16.0),
 
@@ -199,7 +193,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFff8600)),
+                            borderSide: BorderSide(color: Color(0xFF007ea7)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -228,7 +222,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.location_on),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFff8600)),
+                            borderSide: BorderSide(color: Color(0xFF007ea7)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -258,7 +252,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           _ageRanges
                               .map(
                                 (range) => ChoiceChip(
-                                  backgroundColor: Color(0xFFf1f2f6),
+                                  backgroundColor: Color(0xFFF0F0F5),
                                   label: Text(range),
                                   selected: _selectedAgeRange == range,
                                   onSelected: (selected) {
@@ -274,7 +268,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             ? Colors
                                                 .white // Color when selected
                                             : Color(
-                                              0xFF27187e,
+                                              0xFF003459,
                                             ), // Default color
                                   ),
                                   selectedColor: const Color(0xFF758bfd),
@@ -306,7 +300,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           _professions
                               .map(
                                 (profession) => ChoiceChip(
-                                  backgroundColor: Color(0xFFf1f2f6),
+                                  backgroundColor: Color(0xFFF0F0F5),
                                   label: Text(profession),
                                   selected: _selectedProfession == profession,
                                   onSelected: (selected) {
@@ -320,7 +314,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         _selectedProfession == profession
                                             ? Colors
                                                 .white // Color when selected
-                                            : Color(0xFF27187e),
+                                            : Color(0xFF003459),
                                   ),
                                   selectedColor: const Color(0xFF758bfd),
                                   // Color of the chip when selected
@@ -364,7 +358,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           _mentalHealthIssues
                               .map(
                                 (issue) => FilterChip(
-                                  backgroundColor: Color(0xFFf1f2f6),
+                                  backgroundColor: Color(0xFFF0F0F5),
                                   label: Text(
                                     issue,
                                     style: TextStyle(
@@ -375,7 +369,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               ? Colors
                                                   .white // Color when selected
                                               : Color(
-                                                0xFF27187e,
+                                                0xFF003459,
                                               ), // Default color
                                     ),
                                   ),
@@ -437,7 +431,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.email),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFff8600)),
+                            borderSide: BorderSide(color: Color(0xFF007ea7)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -477,7 +471,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           prefixIcon: const Icon(Icons.lock),
 
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFff8600)),
+                            borderSide: BorderSide(color: Color(0xFF007ea7)),
                           ),
 
                           focusedBorder: OutlineInputBorder(
@@ -556,7 +550,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 border: Border.all(
                                   color:
                                       _avatar == avatar
-                                          ? const Color(0xFF758bfd)
+                                          ? const Color(0xFF00a8e8)
                                           : Colors.transparent,
                                   width: 2,
                                 ),
@@ -578,11 +572,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        backgroundColor: const Color(0xFF758bfd),
+                        backgroundColor: const Color(0xFF00a8e8),
                       ),
                       child: const Text(
                         'Sign Up',
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                     ),
 
@@ -593,7 +587,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                       child: const Text(
                         "Already have an account? Login",
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF00a8e8),
+                        ),
                       ),
                     ),
                   ],

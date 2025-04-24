@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -9,16 +9,13 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/bgimage/peak_background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
+        decoration: const BoxDecoration(color: Colors.white),
         padding: EdgeInsets.only(
           left: 16.0,
           right: 16.0,
-          top: MediaQuery.of(context).padding.top + 50.0, // ✅ Manual top safe space
+          top:
+              MediaQuery.of(context).padding.top +
+              50.0, // ✅ Manual top safe space
           bottom: 20.0,
         ),
         child: Column(
@@ -27,28 +24,32 @@ class WelcomeScreen extends StatelessWidget {
             Column(
               children: [
                 Text(
-                  'Welcome to Mind Harbor',
+                  'Welcome to OneLife',
                   style: GoogleFonts.roboto(
-                    fontSize: MediaQuery.of(context).size.width > 360 ? 30.0 : 24.0,
+                    fontSize:
+                        MediaQuery.of(context).size.width > 360 ? 30.0 : 24.0,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF000000),
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10.0),
-                Text('Your space for calm, clarity, and care.',
-                style: GoogleFonts.roboto(
-                  fontSize: MediaQuery.of(context).size.width > 360 ? 14.0 : 11.0,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF000000),
-                ),)
+                Text(
+                  'Your space for calm, clarity, and care.',
+                  style: GoogleFonts.roboto(
+                    fontSize:
+                        MediaQuery.of(context).size.width > 360 ? 14.0 : 11.0,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF000000),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 0.0),
 
-            Expanded( // ✅ Carousel fills available space without fixed height
+            Expanded(
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 50.0,horizontal: 30.0),
+                padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 30.0),
                 child: CarouselSlider(
                   options: CarouselOptions(
                     autoPlay: true,
@@ -67,11 +68,10 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ),
 
-           // const SizedBox(height: 20.0),
-
+            // const SizedBox(height: 20.0),
             Container(
-            // color: Colors.amber,
-              padding: EdgeInsets.symmetric(vertical: 10.0,horizontal: 20.0),
+              // color: Colors.amber,
+              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
 
@@ -85,11 +85,14 @@ class WelcomeScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      backgroundColor: const Color(0xFF758bfd),
+                      backgroundColor: const Color(0xFF00a8e8),
                     ),
                     child: const Text(
                       'Sign Up',
-                      style: TextStyle(fontSize: 18.0, color: Color(0xFF000000)),
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Color(0xFFffffff),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 5.0),
@@ -98,7 +101,7 @@ class WelcomeScreen extends StatelessWidget {
                       Navigator.of(context).pushNamed('/login');
                     },
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFff8600)),
+                      side: const BorderSide(color: Color(0xFF007ea7)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -106,14 +109,16 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     child: const Text(
                       'Login',
-                      style: TextStyle(fontSize: 18.0, color: Color(0xFFff8600)),
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Color(0xFF00a8e8),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12.0),
-
           ],
         ),
       ),
@@ -130,8 +135,8 @@ class WelcomeScreen extends StatelessWidget {
           boxShadow: const [
             BoxShadow(
               color: Colors.grey,
-              blurRadius: 4.0,
-              offset: Offset(0, 3),
+              blurRadius: 2.0,
+              offset: Offset(3, 6),
             ),
           ],
         ),

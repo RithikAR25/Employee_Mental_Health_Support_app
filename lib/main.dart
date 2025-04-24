@@ -1,14 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:mental_health_support_app/ui/screens/feature_screen.dart';
-import 'firebase_options.dart'; // Import the generated file
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
-import 'ui/screens/welcome_screen.dart'; // Import WelcomeScreen
-import 'ui/screens/sign_up_screen.dart'; // Import SignUpScreen
-import 'ui/screens/login_screen.dart'; // Import LoginScreen
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'firebase_options.dart';
+import 'ui/screens/feature_screen.dart';
+import 'ui/screens/login_screen.dart';
+import 'ui/screens/sign_up_screen.dart';
+import 'ui/screens/splash_screen.dart';
+import 'ui/screens/welcome_screen.dart';
 
 // Create a global function to check token expiration
 Future<void> checkTokenExpiration(BuildContext? context) async {
@@ -31,10 +34,11 @@ Future<void> checkTokenExpiration(BuildContext? context) async {
         await storage.delete(key: 'user_id');
         // Redirect to welcome.  Use a pushAndRemoveUntil to prevent the user
         // from being able to go back to the expired session.
-        if (context.mounted) { // Check if context is still valid
+        if (context.mounted) {
+          // Check if context is still valid
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                (route) => false, // Remove all previous routes
+            (route) => false, // Remove all previous routes
           );
         } else {
           print("Context is no longer valid, cannot navigate");
@@ -46,10 +50,11 @@ Future<void> checkTokenExpiration(BuildContext? context) async {
       await storage.delete(key: 'auth_token');
       await storage.delete(key: 'auth_expiration');
       await storage.delete(key: 'user_id');
-      if (context.mounted) { // Check if context is still valid
+      if (context.mounted) {
+        // Check if context is still valid
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-              (route) => false, // Remove all previous routes
+          (route) => false, // Remove all previous routes
         );
       } else {
         print("Context is no longer valid, cannot navigate");
@@ -60,10 +65,8 @@ Future<void> checkTokenExpiration(BuildContext? context) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp()); // Replace MyApp() with your main app widget if different
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -75,7 +78,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Timer? _timer;
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>(); // ADD THIS LINE
+  final GlobalKey<NavigatorState> _navigatorKey =
+      GlobalKey<NavigatorState>(); // ADD THIS LINE
 
   @override
   void initState() {
@@ -95,11 +99,13 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: _navigatorKey, // ADD THIS LINE
+      navigatorKey: _navigatorKey,
+      // ADD THIS LINE
       title: 'Employee Mental Health Support',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        fontFamily: GoogleFonts.cambo().fontFamily, // Apply roboto as the default font
+        fontFamily:
+            GoogleFonts.cambo().fontFamily, // Apply cambo as the default font
         textTheme: TextTheme(
           // Use roboto for headings and cambo for the rest
           displayLarge: GoogleFonts.roboto(),
@@ -111,21 +117,28 @@ class _MyAppState extends State<MyApp> {
           titleLarge: GoogleFonts.roboto(),
           titleMedium: GoogleFonts.roboto(),
           titleSmall: GoogleFonts.roboto(),
-          bodyLarge: GoogleFonts.roboto(),  // Default font
-          bodyMedium: GoogleFonts.roboto(), // Default font
-          labelLarge: GoogleFonts.roboto(), // Default font
-          labelMedium: GoogleFonts.roboto(),// Default font
-          labelSmall: GoogleFonts.roboto(),  // Default font
+          bodyLarge: GoogleFonts.cambo(),
+          // Default font
+          bodyMedium: GoogleFonts.cambo(),
+          // Default font
+          labelLarge: GoogleFonts.cambo(),
+          // Default font
+          labelMedium: GoogleFonts.cambo(),
+          // Default font
+          labelSmall: GoogleFonts.cambo(), // Default font
         ),
       ),
-      initialRoute: '/', // Set WelcomeScreen as the initial route
+      home: const SplashScreen(),
+      // Set SplashScreen as the initial screen
       routes: {
-        '/': (context) => const WelcomeScreen(), // Define WelcomeScreen route
-        '/signup': (context) => const SignUpScreen(), // Define SignUpScreen route
-        '/login': (context) => const LoginScreen(), // Define LoginScreen route
+        '/welcome': (context) => const WelcomeScreen(),
+        // Define WelcomeScreen route
+        '/signup': (context) => const SignUpScreen(),
+        // Define SignUpScreen route
+        '/login': (context) => const LoginScreen(),
+        // Define LoginScreen route
         '/home': (context) => FeaturePage(),
       },
     );
   }
 }
-
