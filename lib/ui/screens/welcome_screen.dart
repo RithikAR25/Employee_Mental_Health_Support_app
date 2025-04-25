@@ -29,7 +29,7 @@ class WelcomeScreen extends StatelessWidget {
                     fontSize:
                         MediaQuery.of(context).size.width > 360 ? 30.0 : 24.0,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF000000),
+                    color: const Color(0xFF00171F),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -85,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      backgroundColor: const Color(0xFF00a8e8),
+                      backgroundColor: const Color(0xFF00A8E8),
                     ),
                     child: const Text(
                       'Sign Up',
@@ -101,7 +101,7 @@ class WelcomeScreen extends StatelessWidget {
                       Navigator.of(context).pushNamed('/login');
                     },
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF007ea7)),
+                      side: const BorderSide(color: Color(0xFF007EA7)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -111,7 +111,7 @@ class WelcomeScreen extends StatelessWidget {
                       'Login',
                       style: TextStyle(
                         fontSize: 18.0,
-                        color: Color(0xFF00a8e8),
+                        color: Color(0xFF00A8E8),
                       ),
                     ),
                   ),

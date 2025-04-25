@@ -179,6 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: GoogleFonts.chivo(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
                       ),
                     ),
 
@@ -197,7 +198,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: Colors.black,
+                              color: Color(0xFF003459),
                               width: 2.0,
                             ),
                           ),
@@ -226,7 +227,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: Colors.black,
+                              color: Color(0xFF003459),
                               width: 2.0,
                             ),
                           ),
@@ -244,7 +245,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     Text(
                       'Age Range',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
+                      ),
                     ),
                     Wrap(
                       spacing: 6.0,
@@ -267,9 +271,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         _selectedAgeRange == range
                                             ? Colors
                                                 .white // Color when selected
-                                            : Color(
-                                              0xFF003459,
-                                            ), // Default color
+                                            : Color(0xFF003459),
                                   ),
                                   selectedColor: const Color(0xFF758bfd),
                                   // Color of the chip when selected
@@ -292,7 +294,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16.0),
                     Text(
                       'Working Profession',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
+                      ),
                     ),
                     Wrap(
                       spacing: 6.0,
@@ -342,6 +347,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: GoogleFonts.chivo(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
                       ),
                     ),
 
@@ -349,7 +355,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     Text(
                       'Mental Health Issue(s)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
+                      ),
                     ),
 
                     Wrap(
@@ -415,6 +424,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: GoogleFonts.chivo(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
                       ),
                     ),
 
@@ -435,7 +445,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: Colors.black,
+                              color: Color(0xFF003459),
                               width: 2.0,
                             ),
                           ),
@@ -476,7 +486,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                              color: Colors.black,
+                              color: Color(0xFF003459),
                               width: 2.0,
                             ),
                           ),
@@ -517,6 +527,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: GoogleFonts.chivo(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF00171F),
                       ),
                     ),
 
@@ -589,7 +600,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         "Already have an account? Login",
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF00a8e8),
+                          color: Color(0xFF007EA7),
                         ),
                       ),
                     ),

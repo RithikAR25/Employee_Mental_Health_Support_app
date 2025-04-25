@@ -34,18 +34,6 @@ class ArticlesPage extends StatelessWidget {
   }
 }
 
-// class SettingsPage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Text(
-//         'Settings Page Content',
-//         style: TextStyle(color: Colors.white),
-//       ),
-//     );
-//   }
-// }
-
 class FeaturePage extends StatefulWidget {
   static const String id = '/home';
 

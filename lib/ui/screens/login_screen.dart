@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.chivo(
                       fontSize: 32.0,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF000000),
+                      color: const Color(0xFF00171F),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -154,11 +154,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Use outlined input border
                         prefixIcon: Icon(Icons.email),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF003459)),
+                          borderSide: BorderSide(color: Color(0xFF007EA7)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: Colors.black,
+                            color: Color(0xFF003459),
                             width: 2.0,
                           ),
                         ),
@@ -185,11 +185,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Use outlined input border
                         prefixIcon: const Icon(Icons.lock),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF003459)),
+                          borderSide: BorderSide(color: Color(0xFF007EA7)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                            color: Colors.black,
+                            color: Color(0xFF003459),
                             width: 2.0,
                           ),
                         ),

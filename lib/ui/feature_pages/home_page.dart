@@ -155,7 +155,7 @@ class _HomePageState extends State<HomePage> {
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF003459),
+            color: Color(0xFF00171F),
           ),
         ),
         // User Avatar (using CachedNetworkImage for network images)
@@ -240,7 +240,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFF003459)),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF00171F)),
           textAlign: TextAlign.center,
         ),
       ],
@@ -282,7 +282,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF003459),
+                color: Color(0xFF00171F),
               ),
             ),
             TextButton(
@@ -291,7 +291,7 @@ class _HomePageState extends State<HomePage> {
               },
               child: const Text(
                 'See All',
-                style: TextStyle(color: Color(0xFF00a8e8)),
+                style: TextStyle(color: Color(0xFF007EA7)),
               ),
             ),
           ],
@@ -372,7 +372,7 @@ class _HomePageState extends State<HomePage> {
                           // Display rating or "N/A"
                           style: const TextStyle(
                             fontSize: 10,
-                            color: Color(0xFF003459),
+                            color: Color(0xFF00171F),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -393,7 +393,7 @@ class _HomePageState extends State<HomePage> {
                   'Contact: ${doctor['contact'] ?? "N/A"}', // Display contact
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF003459),
+                    color: Color(0xFF00171F),
                   ),
                 ),
               ],
