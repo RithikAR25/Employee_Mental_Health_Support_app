@@ -95,7 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'Your Profile',
           style: TextStyle(color: Color(0xFF00171F)),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFF007EA7),
         iconTheme: const IconThemeData(color: Color(0xFF00171F)),
         elevation: 0.8,
       ),
@@ -109,39 +109,40 @@ class _ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         if (_userName != null)
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundImage:
-                                _userAvatar != null
-                                    ? AssetImage('assets/avatars/$_userAvatar')
-                                    : const AssetImage(
-                                      'assets/avatars/avatar1.png',
-                                    ),
-                          ),
-                        const SizedBox(width: 16),
-                        Text(
-                          _userName!,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF00171F),
-                          ),
-                        ),
+                          Column(
+                            // <-- Modification: Added Column here
+                            children: [
+                              CircleAvatar(
+                                radius: MediaQuery.of(context).size.width * 0.2,
+                                backgroundImage:
+                                    _userAvatar != null
+                                        ? AssetImage(
+                                          'assets/avatars/$_userAvatar',
+                                        )
+                                        : const AssetImage(
+                                          'assets/avatars/avatar1.png',
+                                        ),
+                              ),
+                              const SizedBox(height: 16),
+                              // <-- Modified: width changed to height
+                              Text(
+                                _userName!,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF00171F),
+                                ),
+                              ),
+                            ],
+                          ), // <-- End of Column
                       ],
                     ),
+
                     const SizedBox(height: 24),
-                    const Text(
-                      'Your Details',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF00171F),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+
                     _buildDetailRow('Email', _userDetails['email']),
                     _buildDetailRow('Name', _userDetails['name']),
                     _buildDetailRow('Location', _userDetails['location']),
@@ -181,22 +182,29 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildDetailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF007EA7),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF007EA7),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value ?? 'Not specified',
-            style: const TextStyle(color: Color(0xFF00171F)),
+          const SizedBox(height: 30),
+          Expanded(
+            child: Align(
+              // <-- Modification: Added Align widget
+              alignment: Alignment.centerRight,
+              // <-- Modification: Align text to end (right)
+              child: Text(
+                value ?? 'Not specified',
+                style: const TextStyle(color: Color(0xFF00171F)),
+              ),
+            ),
           ),
-          const Divider(),
         ],
       ),
     );

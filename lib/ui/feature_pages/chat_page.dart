@@ -14,7 +14,6 @@ class _ChatPageState extends State<ChatPage> {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   List<Map<String, dynamic>> _chatGroups = [];
 
-  // 🔵 [MODIFICATION] Added TextEditingController and search query
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
@@ -59,7 +58,7 @@ class _ChatPageState extends State<ChatPage> {
       final snapshot = await _database.child('chat_groups').get();
       if (snapshot.value != null) {
         Map<dynamic, dynamic> chatGroupsData =
-        snapshot.value as Map<dynamic, dynamic>;
+            snapshot.value as Map<dynamic, dynamic>;
         List<Map<String, dynamic>> userGroups = [];
         List<Map<String, dynamic>> otherGroups = [];
 
@@ -106,15 +105,15 @@ class _ChatPageState extends State<ChatPage> {
     });
     try {
       final snapshot =
-      await _database
-          .child('chat_groups')
-          .startAt(null, key: _chatGroups.last['groupId'])
-          .limitToFirst(_batchSize)
-          .get();
+          await _database
+              .child('chat_groups')
+              .startAt(null, key: _chatGroups.last['groupId'])
+              .limitToFirst(_batchSize)
+              .get();
 
       if (snapshot.value != null) {
         Map<dynamic, dynamic> chatGroupsData =
-        snapshot.value as Map<dynamic, dynamic>;
+            snapshot.value as Map<dynamic, dynamic>;
         final List<Map<String, dynamic>> newGroups = [];
         chatGroupsData.forEach((key, value) {
           if (value is Map) {
@@ -162,10 +161,10 @@ class _ChatPageState extends State<ChatPage> {
 
     // 🔵 [MODIFICATION] Filter chat groups according to search query
     List<Map<String, dynamic>> filteredChatGroups =
-    _chatGroups.where((group) {
-      final name = (group['name'] ?? '').toString().toLowerCase();
-      return name.contains(_searchQuery);
-    }).toList();
+        _chatGroups.where((group) {
+          final name = (group['name'] ?? '').toString().toLowerCase();
+          return name.contains(_searchQuery);
+        }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F5),
@@ -189,34 +188,34 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(height: 20),
             Expanded(
               child:
-              _isLoading && _chatGroups.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                controller: _scrollController,
-                itemCount:
-                filteredChatGroups.length + (_isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index < filteredChatGroups.length) {
-                    final group = filteredChatGroups[index];
-                    final isUserGroup =
-                        group['members'] != null &&
-                            (group['members'] as Map).containsKey(
-                              _currentUserId,
+                  _isLoading && _chatGroups.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                        controller: _scrollController,
+                        itemCount:
+                            filteredChatGroups.length + (_isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index < filteredChatGroups.length) {
+                            final group = filteredChatGroups[index];
+                            final isUserGroup =
+                                group['members'] != null &&
+                                (group['members'] as Map).containsKey(
+                                  _currentUserId,
+                                );
+                            return _buildGroupChatListItem(
+                              context,
+                              group,
+                              isUserGroup,
                             );
-                    return _buildGroupChatListItem(
-                      context,
-                      group,
-                      isUserGroup,
-                    );
-                  } else if (_isLoading) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return null;
-                },
-              ),
+                          } else if (_isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          return null;
+                        },
+                      ),
             ),
           ],
         ),
@@ -252,9 +251,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildGroupChatListItem(BuildContext context,
-      Map<String, dynamic> group,
-      bool isUserGroup,) {
+  Widget _buildGroupChatListItem(
+    BuildContext context,
+    Map<String, dynamic> group,
+    bool isUserGroup,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -289,7 +290,7 @@ class _ChatPageState extends State<ChatPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight:
-                    isUserGroup ? FontWeight.bold : FontWeight.normal,
+                        isUserGroup ? FontWeight.bold : FontWeight.normal,
                     color: const Color(0xFF00171F),
                   ),
                 ),

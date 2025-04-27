@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
 
+import '../feature_pages/article_page.dart';
 import '../feature_pages/chat_page.dart';
 import '../feature_pages/home_page.dart';
 import '../feature_pages/settings_page.dart';
@@ -12,20 +13,6 @@ class AddPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text('Add Page Content', style: TextStyle(color: Colors.white)),
-    );
-  }
-}
-
-class ArticlesPage extends StatelessWidget {
-  const ArticlesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Articles Page Content',
-        style: TextStyle(color: Colors.white),
-      ),
     );
   }
 }
@@ -46,7 +33,7 @@ class _FeaturePageState extends State<FeaturePage> {
     HomePage(),
     ChatPage(),
     AddPage(),
-    ArticlesPage(),
+    ArticlePage(),
     SettingsPage(),
   ];
 
