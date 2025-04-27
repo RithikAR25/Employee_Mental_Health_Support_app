@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
+import 'ui/feature_pages/profile_page.dart';
 import 'ui/screens/feature_screen.dart';
 import 'ui/screens/login_screen.dart';
 import 'ui/screens/sign_up_screen.dart';
@@ -66,7 +68,14 @@ Future<void> checkTokenExpiration(BuildContext? context) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  // Set preferred orientations here
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -78,8 +87,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Timer? _timer;
-  final GlobalKey<NavigatorState> _navigatorKey =
-      GlobalKey<NavigatorState>(); // ADD THIS LINE
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -138,6 +146,7 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => const LoginScreen(),
         // Define LoginScreen route
         '/home': (context) => FeaturePage(),
+        '/profile': (context) => const ProfilePage(),
       },
     );
   }

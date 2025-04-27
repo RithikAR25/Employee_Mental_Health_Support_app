@@ -1,9 +1,59 @@
+import 'dart:developer' as developer;
+import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart'; // Import for cached network images
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  List<String> _carouselImageUrls = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRandomPosters(5); // Fetch exactly 5 random posters
+  }
+
+  Future<void> _loadRandomPosters(int count) async {
+    try {
+      final snapshot = await _database.child('posters').get();
+      if (snapshot.value != null && snapshot.value is List) {
+        final List<dynamic> postersData = snapshot.value as List<dynamic>;
+        final Random random = Random();
+        final List<String> randomUrls = [];
+        final int numberOfPosters = postersData.length;
+        final int numberOfUrlsToFetch = min(count, numberOfPosters);
+
+        if (numberOfPosters > 0) {
+          postersData.shuffle(random);
+          randomUrls.addAll(
+            postersData.take(numberOfUrlsToFetch).cast<String>(),
+          );
+        }
+
+        setState(() {
+          _carouselImageUrls = randomUrls;
+        });
+        developer.log("Welcome Screen Poster URLs: $_carouselImageUrls");
+      } else {
+        developer.log(
+          "Error: Unexpected data type for posters data: ${snapshot.value.runtimeType}",
+        );
+      }
+    } catch (error) {
+      print("Error fetching welcome screen posters: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +63,7 @@ class WelcomeScreen extends StatelessWidget {
         padding: EdgeInsets.only(
           left: 16.0,
           right: 16.0,
-          top:
-              MediaQuery.of(context).padding.top +
-              50.0, // ✅ Manual top safe space
+          top: MediaQuery.of(context).padding.top + 50.0,
           bottom: 20.0,
         ),
         child: Column(
@@ -46,10 +94,12 @@ class WelcomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 0.0),
-
             Expanded(
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 30.0),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20.0,
+                  horizontal: 30.0,
+                ),
                 child: CarouselSlider(
                   options: CarouselOptions(
                     autoPlay: true,
@@ -57,24 +107,20 @@ class WelcomeScreen extends StatelessWidget {
                     aspectRatio: 9 / 16,
                     viewportFraction: 1,
                   ),
-                  items: [
-                    _buildCarouselItem(context, 'assets/posters/poster1.jpg'),
-                    _buildCarouselItem(context, 'assets/posters/poster2.jpg'),
-                    _buildCarouselItem(context, 'assets/posters/poster3.jpg'),
-                    _buildCarouselItem(context, 'assets/posters/poster4.jpg'),
-                    _buildCarouselItem(context, 'assets/posters/poster5.jpg'),
-                  ],
+                  items:
+                      _carouselImageUrls.map((url) {
+                        return _buildCarouselItem(context, url);
+                      }).toList(),
                 ),
               ),
             ),
-
-            // const SizedBox(height: 20.0),
             Container(
-              // color: Colors.amber,
-              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(
+                vertical: 10.0,
+                horizontal: 20.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-
                 children: [
                   ElevatedButton(
                     onPressed: () {
@@ -125,7 +171,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCarouselItem(BuildContext context, String imagePath) {
+  Widget _buildCarouselItem(BuildContext context, String imageUrl) {
     return Padding(
       padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
       child: Container(
@@ -142,10 +188,14 @@ class WelcomeScreen extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(10.0),
-          child: Image.asset(
-            imagePath,
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
             fit: BoxFit.cover,
             width: MediaQuery.of(context).size.width,
+            placeholder:
+                (context, url) =>
+                    const Center(child: CircularProgressIndicator()),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
           ),
         ),
       ),

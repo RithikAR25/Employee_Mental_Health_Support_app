@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart'; // Import for cached images
 import 'package:firebase_auth/firebase_auth.dart'; // Import for Firebase Auth
@@ -18,16 +19,7 @@ class _HomePageState extends State<HomePage> {
 
   // Lists to hold data fetched from Firebase
   List<Map<String, dynamic>> _doctors = [];
-  List<String> _imageCarouselUrls = [
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=3200&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    //beach
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=3174&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    //forest
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    //mountains
-    "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    //sunrise
-  ];
+  List<String> _imageCarouselUrls = [];
   String _userName =
       "User"; // Default user name  -  Will be fetched from Firebase
   String _userAvatar =
@@ -38,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadUserData();
     _loadDoctors();
+    _loadRandomPosters();
   }
 
   // Load user data (name and avatar) from Firebase
@@ -116,6 +109,41 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // New function to load 4 random posters
+  Future<void> _loadRandomPosters() async {
+    try {
+      final snapshot = await _database.child('posters').get();
+      if (snapshot.value != null && snapshot.value is List) {
+        final List<dynamic> postersData = snapshot.value as List<dynamic>;
+        final Random random = Random();
+        final List<String> randomUrls = [];
+
+        // Ensure we don't try to pick more URLs than available
+        final int numberOfPosters = postersData.length;
+        final int numberOfUrlsToFetch = min(4, numberOfPosters);
+
+        if (numberOfPosters > 0) {
+          // Shuffle the list and take the first 'numberOfUrlsToFetch' elements
+          postersData.shuffle(random);
+          randomUrls.addAll(
+            postersData.take(numberOfUrlsToFetch).cast<String>(),
+          );
+        }
+
+        setState(() {
+          _imageCarouselUrls = randomUrls;
+        });
+        developer.log("Random Poster URLs: $_imageCarouselUrls");
+      } else {
+        developer.log(
+          "Error: Unexpected data type for posters data: ${snapshot.value.runtimeType}",
+        );
+      }
+    } catch (error) {
+      print("Error fetching posters: $error");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,9 +187,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         // User Avatar (using CachedNetworkImage for network images)
-        CircleAvatar(
-          radius: 25,
-          backgroundImage: AssetImage('assets/avatars/$_userAvatar'),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(context, '/profile');
+          },
+          child: CircleAvatar(
+            radius: 25,
+            backgroundImage: AssetImage('assets/avatars/$_userAvatar'),
+          ),
         ),
       ],
     );

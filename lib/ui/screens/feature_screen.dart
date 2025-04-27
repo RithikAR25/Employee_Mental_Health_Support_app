@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
 
+import '../feature_pages/chat_page.dart';
 import '../feature_pages/home_page.dart';
 import '../feature_pages/settings_page.dart';
 
-class ChatPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Chat Page Content', style: TextStyle(color: Colors.white)),
-    );
-  }
-}
-
 class AddPage extends StatelessWidget {
+  const AddPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -23,6 +17,8 @@ class AddPage extends StatelessWidget {
 }
 
 class ArticlesPage extends StatelessWidget {
+  const ArticlesPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -36,6 +32,8 @@ class ArticlesPage extends StatelessWidget {
 
 class FeaturePage extends StatefulWidget {
   static const String id = '/home';
+
+  const FeaturePage({super.key});
 
   @override
   _FeaturePageState createState() => _FeaturePageState();
