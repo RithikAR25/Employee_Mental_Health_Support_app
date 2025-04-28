@@ -105,6 +105,56 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Function to handle password reset
+  Future<void> _resetPassword() async {
+    if (_emailController.text.isEmpty) {
+      _showErrorDialog("Please enter your email to reset your password.");
+      return;
+    }
+
+    try {
+      // Show a loading indicator
+      showDialog(
+        context: context,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      await _auth.sendPasswordResetEmail(email: _emailController.text.trim());
+      Navigator.of(context).pop(); // Dismiss the loading indicator
+
+      // Show a success message
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text("Password Reset Email Sent"),
+              content: const Text(
+                "An email has been sent with instructions to reset your password.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+      );
+    } on FirebaseAuthException catch (e) {
+      Navigator.of(context).pop(); // Dismiss loading indicator on error.
+
+      if (e.code == 'invalid-email') {
+        _showErrorDialog("The email address is not valid.");
+      } else if (e.code == 'user-not-found') {
+        _showErrorDialog("There is no user with this email address.");
+      } else {
+        _showErrorDialog("Error sending reset email: ${e.message}");
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Dismiss loading indicator
+      _showErrorDialog("An unexpected error occurred: $e");
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -232,7 +282,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      _resetPassword();
+                    },
+                    child: const Text(
+                      "Forgot Password?",
+                      style: TextStyle(fontSize: 14, color: Color(0xFF007ea7)),
+                    ),
+                  ),
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pushNamed('/signup');
