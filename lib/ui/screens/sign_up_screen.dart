@@ -123,8 +123,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  // In sign_up_screen.dart
+
   Future<void> _joinChatGroup(String userId, String groupName) async {
-    await _database.child('chat_groups/$groupName/members/$userId').set(true);
+    final DatabaseReference groupRef = _database.child(
+      'chat_groups/$groupName/members/$userId',
+    );
+    try {
+      await groupRef.set(
+        true,
+      ); // Set the user ID to true to indicate membership
+      print('User $userId added to group $groupName');
+    } catch (e) {
+      print('Error adding user $userId to group $groupName: $e');
+      // Handle error appropriately
+    }
   }
 
   void _showErrorDialog(String message) {

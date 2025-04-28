@@ -75,8 +75,6 @@ class _FeaturePageState extends State<FeaturePage> {
             selectedColor: Color(0xFF003459),
             unSelectedColor: Color(0xFF00a8e8),
             title: Text('Chat'),
-            badge: Text('0'),
-            showBadge: true,
             badgeColor: Colors.red,
           ),
           BottomBarItem(

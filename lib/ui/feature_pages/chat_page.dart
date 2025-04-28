@@ -1,7 +1,11 @@
+// chat_page.dart
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import 'group_chat_screen.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -13,15 +17,13 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   List<Map<String, dynamic>> _chatGroups = [];
-
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
-
   String _currentUserId = "";
   bool _isLoading = true;
   final ScrollController _scrollController = ScrollController();
   final int _batchSize = 10;
-  int _startAt = 0;
+  String? _lastKey;
   bool _hasMore = true;
 
   @override
@@ -34,11 +36,48 @@ class _ChatPageState extends State<ChatPage> {
     _loadInitialChatGroups();
     _scrollController.addListener(_loadMoreChatGroups);
 
-    // 🔵 [MODIFICATION] Listen to search controller changes
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
+    });
+
+    _database.child('chat_groups').onChildChanged.listen((event) {
+      if (event.snapshot.value != null) {
+        final updatedGroup =
+            (event.snapshot.value as Map<dynamic, dynamic>)
+                .cast<String, dynamic>();
+        final groupId = event.snapshot.key;
+        setState(() {
+          final index = _chatGroups.indexWhere(
+            (group) => group['groupId'] == groupId,
+          );
+          if (index != -1) {
+            _chatGroups[index] = {'groupId': groupId, ...updatedGroup};
+            _sortChatGroups();
+          }
+        });
+      }
+    });
+
+    _database.child('chat_groups').onChildAdded.listen((event) {
+      if (event.snapshot.value != null) {
+        final newGroup =
+            (event.snapshot.value as Map<dynamic, dynamic>)
+                .cast<String, dynamic>();
+        final groupId = event.snapshot.key;
+        final groupWithId = {'groupId': groupId, ...newGroup};
+
+        /// 🛠 Modification Start — Prevent duplicate groups in onChildAdded
+        setState(() {
+          if (!_chatGroups.any((group) => group['groupId'] == groupId)) {
+            _chatGroups.add(groupWithId);
+            _sortChatGroups();
+          }
+        });
+
+        /// 🛠 Modification End
+      }
     });
   }
 
@@ -46,47 +85,40 @@ class _ChatPageState extends State<ChatPage> {
   void dispose() {
     _scrollController.removeListener(_loadMoreChatGroups);
     _scrollController.dispose();
-
-    // 🔵 [MODIFICATION] Dispose the search controller
     _searchController.dispose();
-
     super.dispose();
   }
 
   Future<void> _loadInitialChatGroups() async {
+    setState(() {
+      _isLoading = true;
+      _chatGroups.clear();
+      _lastKey = null;
+      _hasMore = true;
+    });
     try {
-      final snapshot = await _database.child('chat_groups').get();
+      Query _query = _database
+          .child('chat_groups')
+          .orderByKey()
+          .limitToFirst(_batchSize);
+      final snapshot = await _query.get();
       if (snapshot.value != null) {
-        Map<dynamic, dynamic> chatGroupsData =
-            snapshot.value as Map<dynamic, dynamic>;
-        List<Map<String, dynamic>> userGroups = [];
-        List<Map<String, dynamic>> otherGroups = [];
-
-        chatGroupsData.forEach((key, value) {
-          if (value is Map) {
-            Map<String, dynamic> group = value.cast<String, dynamic>();
-            group['groupId'] = key;
-            if (group['members'] != null &&
-                (group['members'] as Map).containsKey(_currentUserId)) {
-              userGroups.add(group);
-            } else {
-              otherGroups.add(group);
-            }
+        final groupsData =
+            (snapshot.value as Map<dynamic, dynamic>).cast<String, dynamic>();
+        groupsData.forEach((key, value) {
+          if (!_chatGroups.any((group) => group['groupId'] == key)) {
+            _chatGroups.add({'groupId': key, ...value});
           }
+          _lastKey = key;
         });
-        _chatGroups = userGroups + otherGroups;
-        _startAt = _chatGroups.length;
-        _hasMore = _chatGroups.length >= _batchSize;
-        setState(() {
-          _isLoading = false;
-        });
+        _sortChatGroups();
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        _hasMore = false;
       }
     } catch (error) {
       print("Error fetching initial chat groups: $error");
+      _hasMore = false;
+    } finally {
       setState(() {
         _isLoading = false;
       });
@@ -94,7 +126,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _loadMoreChatGroups() async {
-    if (_isLoading || !_hasMore) return;
+    if (_isLoading || !_hasMore || _lastKey == null) return;
     if (_scrollController.position.pixels <
         _scrollController.position.maxScrollExtent * 0.7) {
       return;
@@ -104,119 +136,184 @@ class _ChatPageState extends State<ChatPage> {
       _isLoading = true;
     });
     try {
-      final snapshot =
-          await _database
-              .child('chat_groups')
-              .startAt(null, key: _chatGroups.last['groupId'])
-              .limitToFirst(_batchSize)
-              .get();
-
+      Query _query = _database
+          .child('chat_groups')
+          .orderByKey()
+          .startAfter(_lastKey)
+          .limitToFirst(_batchSize);
+      final snapshot = await _query.get();
       if (snapshot.value != null) {
-        Map<dynamic, dynamic> chatGroupsData =
-            snapshot.value as Map<dynamic, dynamic>;
-        final List<Map<String, dynamic>> newGroups = [];
-        chatGroupsData.forEach((key, value) {
-          if (value is Map) {
-            Map<String, dynamic> group = value.cast<String, dynamic>();
-            group['groupId'] = key;
-            newGroups.add(group);
-          }
-        });
-        if (newGroups.isNotEmpty) {
-          newGroups.removeAt(0);
-          _chatGroups.addAll(newGroups);
-          _startAt = _chatGroups.length;
-          _hasMore = newGroups.length == _batchSize;
+        final groupsData =
+            (snapshot.value as Map<dynamic, dynamic>).cast<String, dynamic>();
+        if (groupsData.isNotEmpty) {
+          groupsData.forEach((key, value) {
+            if (!_chatGroups.any((group) => group['groupId'] == key)) {
+              _chatGroups.add({'groupId': key, ...value});
+            }
+            _lastKey = key;
+          });
+          _sortChatGroups();
+          _hasMore = groupsData.length == _batchSize;
         } else {
           _hasMore = false;
         }
       } else {
         _hasMore = false;
       }
-      setState(() {
-        _isLoading = false;
-      });
     } catch (error) {
       print("Error fetching more chat groups: $error");
+    } finally {
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Map<String, dynamic>? userGroup;
-    for (var group in _chatGroups) {
-      if (group['members'] != null &&
-          (group['members'] as Map).containsKey(_currentUserId)) {
-        userGroup = group;
-        break;
-      }
-    }
-    if (userGroup != null) {
-      _chatGroups.remove(userGroup);
-      _chatGroups.insert(0, userGroup);
-    }
+  Future<void> _joinGroup(BuildContext context, String groupId) async {
+    try {
+      await _database
+          .child('chat_groups/$groupId/members/$_currentUserId')
+          .set(true);
 
-    // 🔵 [MODIFICATION] Filter chat groups according to search query
-    List<Map<String, dynamic>> filteredChatGroups =
-        _chatGroups.where((group) {
-          final name = (group['name'] ?? '').toString().toLowerCase();
-          return name.contains(_searchQuery);
-        }).toList();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Successfully joined the group!')),
+      );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F5),
-      appBar: AppBar(
-        title: const Text(
-          'Chats',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF00171F),
+      // Refresh the list to move the group to "Your Groups" section
+      _loadInitialChatGroups();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to join group: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _sortChatGroups() {
+    _chatGroups.sort((a, b) {
+      final timestampA = a['lastMessage']?['timestamp'] as int? ?? 0;
+      final timestampB = b['lastMessage']?['timestamp'] as int? ?? 0;
+      return timestampB.compareTo(timestampA);
+    });
+  }
+
+  List<Map<String, dynamic>> get _filteredChatGroups {
+    if (_searchQuery.isEmpty) {
+      return _chatGroups;
+    }
+    return _chatGroups.where((group) {
+      final name = (group['name'] ?? '').toString().toLowerCase();
+      return name.contains(_searchQuery);
+    }).toList();
+  }
+
+  String _formatTimestamp(DateTime dateTime) {
+    return DateFormat('HH:mm').format(dateTime);
+  }
+
+  Widget _buildGroupChatListItem(
+    BuildContext context,
+    Map<String, dynamic> group,
+    bool isUserGroup,
+  ) {
+    final bool isMember =
+        group['members'] != null &&
+        group['members'].containsKey(_currentUserId);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.8,
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      child: InkWell(
+        onTap:
+            isMember
+                ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => GroupChatScreen(
+                            groupId: group['groupId'],
+                            groupName: group['name'],
+                          ),
+                    ),
+                  );
+                }
+                : null, // Disable tap if not a member
+        child: Row(
           children: <Widget>[
-            _buildSearchBar(),
-            const SizedBox(height: 20),
-            Expanded(
-              child:
-                  _isLoading && _chatGroups.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                        controller: _scrollController,
-                        itemCount:
-                            filteredChatGroups.length + (_isLoading ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index < filteredChatGroups.length) {
-                            final group = filteredChatGroups[index];
-                            final isUserGroup =
-                                group['members'] != null &&
-                                (group['members'] as Map).containsKey(
-                                  _currentUserId,
-                                );
-                            return _buildGroupChatListItem(
-                              context,
-                              group,
-                              isUserGroup,
-                            );
-                          } else if (_isLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16.0),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-                          return null;
-                        },
-                      ),
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: Color(0xFFF0F0F5),
+              backgroundImage: CachedNetworkImageProvider(
+                group['icon'] ??
+                    "https://cdn-icons-png.flaticon.com/128/10117/10117308.png",
+              ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    group['name'] ?? "Group Name",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight:
+                          isUserGroup ? FontWeight.bold : FontWeight.normal,
+                      color: const Color(0xFF00171F),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    group['lastMessage']?['text'] ?? "No messages yet",
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (isMember)
+              Text(
+                group['lastMessage']?['timestamp'] != null
+                    ? _formatTimestamp(
+                      DateTime.fromMillisecondsSinceEpoch(
+                        group['lastMessage']['timestamp'],
+                      ),
+                    )
+                    : " ",
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            if (!isMember)
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF007ea7),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                ),
+                onPressed: () => _joinGroup(context, group['groupId']),
+                child: const Text(
+                  'Join',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
           ],
         ),
       ),
@@ -240,7 +337,6 @@ class _ChatPageState extends State<ChatPage> {
       ),
       child: TextField(
         controller: _searchController,
-        // 🔵 [MODIFICATION] Connect search controller
         decoration: const InputDecoration(
           hintText: 'Search for groups...',
           prefixIcon: Icon(Icons.search),
@@ -251,65 +347,126 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildGroupChatListItem(
-    BuildContext context,
-    Map<String, dynamic> group,
-    bool isUserGroup,
-  ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+  @override
+  Widget build(BuildContext context) {
+    List<Map<String, dynamic>> yourGroups =
+        _filteredChatGroups
+            .where(
+              (group) =>
+                  group['members'] != null &&
+                  group['members'].containsKey(_currentUserId),
+            )
+            .toList();
+    List<Map<String, dynamic>> otherGroups =
+        _filteredChatGroups
+            .where(
+              (group) =>
+                  group['members'] == null ||
+                  !group['members'].containsKey(_currentUserId),
+            )
+            .toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0F0F5),
+      appBar: AppBar(
+        title: const Text(
+          'Chats',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF00171F),
           ),
-        ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0.8,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: _buildSearchBar(),
+          ),
+        ),
       ),
-      child: Row(
-        children: <Widget>[
-          CircleAvatar(
-            radius: 30,
-            backgroundImage: CachedNetworkImageProvider(
-              group['icon'] ??
-                  "https://github.com/sharmil-shrivastava/mental_health_support_app/blob/main/assets/avatars/avatar1.png?raw=true",
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  group['name'] ?? "Group Name",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight:
-                        isUserGroup ? FontWeight.bold : FontWeight.normal,
-                    color: const Color(0xFF00171F),
-                  ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
+              child: Text(
+                'Your Groups',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  group['lastMessage'] ?? "No messages yet",
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            group['lastMessageTime'] ?? " ",
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
+            yourGroups.isEmpty && !_isLoading
+                ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No groups joined yet.'),
+                )
+                : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: yourGroups.length,
+                  itemBuilder: (context, index) {
+                    return _buildGroupChatListItem(
+                      context,
+                      yourGroups[index],
+                      true,
+                    );
+                  },
+                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
+              child: Text(
+                'Other Groups',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ),
+            _isLoading && _chatGroups.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : otherGroups.isEmpty && !_isLoading && _chatGroups.isNotEmpty
+                ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No other groups available.'),
+                )
+                : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: otherGroups.length,
+                  itemBuilder: (context, index) {
+                    return _buildGroupChatListItem(
+                      context,
+                      otherGroups[index],
+                      false,
+                    );
+                  },
+                ),
+            if (_isLoading && _chatGroups.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            if (!_hasMore && _chatGroups.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(child: Text('No more groups to load.')),
+              ),
+          ],
+        ),
       ),
     );
   }
