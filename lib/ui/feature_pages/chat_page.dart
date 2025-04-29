@@ -3,8 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
+import '../../utils/time_utils.dart';
 import 'group_chat_screen.dart';
 
 class ChatPage extends StatefulWidget {
@@ -97,11 +97,11 @@ class _ChatPageState extends State<ChatPage> {
       _hasMore = true;
     });
     try {
-      Query _query = _database
+      Query query = _database
           .child('chat_groups')
           .orderByKey()
           .limitToFirst(_batchSize);
-      final snapshot = await _query.get();
+      final snapshot = await query.get();
       if (snapshot.value != null) {
         final groupsData =
             (snapshot.value as Map<dynamic, dynamic>).cast<String, dynamic>();
@@ -136,12 +136,12 @@ class _ChatPageState extends State<ChatPage> {
       _isLoading = true;
     });
     try {
-      Query _query = _database
+      Query query = _database
           .child('chat_groups')
           .orderByKey()
           .startAfter(_lastKey)
           .limitToFirst(_batchSize);
-      final snapshot = await _query.get();
+      final snapshot = await query.get();
       if (snapshot.value != null) {
         final groupsData =
             (snapshot.value as Map<dynamic, dynamic>).cast<String, dynamic>();
@@ -206,10 +206,6 @@ class _ChatPageState extends State<ChatPage> {
     }).toList();
   }
 
-  String _formatTimestamp(DateTime dateTime) {
-    return DateFormat('HH:mm').format(dateTime);
-  }
-
   Widget _buildGroupChatListItem(
     BuildContext context,
     Map<String, dynamic> group,
@@ -227,7 +223,7 @@ class _ChatPageState extends State<ChatPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.shade200,
             spreadRadius: 1,
             blurRadius: 2,
             offset: const Offset(0, 1),
@@ -288,7 +284,7 @@ class _ChatPageState extends State<ChatPage> {
             if (isMember)
               Text(
                 group['lastMessage']?['timestamp'] != null
-                    ? _formatTimestamp(
+                    ? formatTimestamp(
                       DateTime.fromMillisecondsSinceEpoch(
                         group['lastMessage']['timestamp'],
                       ),
@@ -328,7 +324,7 @@ class _ChatPageState extends State<ChatPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.shade200,
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 2),

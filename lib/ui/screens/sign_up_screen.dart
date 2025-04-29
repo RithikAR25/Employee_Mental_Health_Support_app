@@ -89,7 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
           await user.sendEmailVerification();
 
-          // CLOSE the loading dialog before showing snackbar or navigating
+          // CLOSE the loading dialog before showing snack bar or navigating
           Navigator.of(context).pop(); // <<=== ADDED this line
 
           ScaffoldMessenger.of(context).showSnackBar(

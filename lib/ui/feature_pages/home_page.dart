@@ -209,7 +209,7 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.shade200,
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 2),
@@ -352,7 +352,7 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.shade200,
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 1),
