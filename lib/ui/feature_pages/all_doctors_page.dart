@@ -278,7 +278,7 @@ class _AllDoctorsPageState extends State<AllDoctorsPage> {
                   doctor['name'],
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 17.5,
+                    fontSize: 17,
                     color: Color(0xFF003459),
                   ),
                 ),
@@ -287,10 +287,7 @@ class _AllDoctorsPageState extends State<AllDoctorsPage> {
                   children: [
                     Text(
                       doctor['specialization'],
-                      style: const TextStyle(
-                        fontSize: 13.2,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(width: 12),
                     Row(
@@ -298,7 +295,7 @@ class _AllDoctorsPageState extends State<AllDoctorsPage> {
                         const Icon(Icons.star, color: Colors.amber, size: 15),
                         Text(
                           '${doctor['rating'] ?? 'N/A'}',
-                          style: const TextStyle(fontSize: 13),
+                          style: const TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
