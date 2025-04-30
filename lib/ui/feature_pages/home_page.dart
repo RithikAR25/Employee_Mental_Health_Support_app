@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart'; // Import for c
 import 'package:firebase_auth/firebase_auth.dart'; // Import for Firebase Auth
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -158,9 +159,9 @@ class _HomePageState extends State<HomePage> {
                 _buildAppBar(context),
                 const SizedBox(height: 20),
                 _buildSearchBar(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 40),
                 _buildCategoryIcons(context),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 _buildImageCarousel(),
                 const SizedBox(height: 20),
                 _buildTopDoctorsSection(context),
@@ -174,16 +175,17 @@ class _HomePageState extends State<HomePage> {
 
   // App bar with greeting and avatar
   Widget _buildAppBar(BuildContext context) {
+    final double _fontSize = MediaQuery.of(context).size.width * 0.055;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Text(
           'Hello, $_userName!',
-          style: const TextStyle(
-            fontSize: 20,
+          style: TextStyle(
+            fontSize: _fontSize,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF00171F),
+            color: const Color(0xFF00171F),
           ),
         ),
         // User Avatar (using CachedNetworkImage for network images)
@@ -192,7 +194,7 @@ class _HomePageState extends State<HomePage> {
             Navigator.pushNamed(context, '/profile');
           },
           child: CircleAvatar(
-            radius: 25,
+            radius: MediaQuery.of(context).size.width * 0.09,
             backgroundImage: AssetImage('assets/avatars/$_userAvatar'),
           ),
         ),
@@ -238,6 +240,7 @@ class _HomePageState extends State<HomePage> {
             context,
             Icons.business_center,
             'Corporate Wellness',
+            Colors.orange,
           ),
         ),
         Expanded(
@@ -245,30 +248,50 @@ class _HomePageState extends State<HomePage> {
             context,
             Icons.school,
             'Colleges & Universities',
+            Colors.blue,
           ),
         ),
         Expanded(
-          child: _buildCategoryIcon(context, Icons.local_hospital, 'Hospitals'),
+          child: _buildCategoryIcon(
+            context,
+            Icons.local_hospital,
+            'Hospitals',
+            Colors.red,
+          ),
         ),
         Expanded(
-          child: _buildCategoryIcon(context, Icons.book, 'EdTech & Coaching'),
+          child: _buildCategoryIcon(
+            context,
+            Icons.book,
+            'EdTech & Coaching',
+            Colors.green,
+          ),
         ),
       ],
     );
   }
 
   // Helper for category icon
-  Widget _buildCategoryIcon(BuildContext context, IconData icon, String label) {
+  Widget _buildCategoryIcon(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Color iconColor,
+  ) {
     return Column(
       children: <Widget>[
         Container(
-          width: 60,
-          height: 60,
+          width: MediaQuery.of(context).size.width * 0.135,
+          height: MediaQuery.of(context).size.width * 0.135,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: const Color(0xFF00a8e8),
+            borderRadius: BorderRadius.circular(30),
+            color: const Color(0xFFffffff),
           ),
-          child: Icon(icon, size: 30, color: Colors.white),
+          child: Icon(
+            icon,
+            size: MediaQuery.of(context).size.width * 0.07,
+            color: iconColor,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -283,7 +306,7 @@ class _HomePageState extends State<HomePage> {
   // Image carousel
   Widget _buildImageCarousel() {
     return SizedBox(
-      height: 200,
+      height: MediaQuery.of(context).size.width * 0.7,
       child: PageView.builder(
         itemCount: _imageCarouselUrls.length,
         itemBuilder: (context, index) {
@@ -360,16 +383,13 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        // Align items to the start
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           CircleAvatar(
-            radius: 36, // Increased radius for larger image
-            backgroundImage: CachedNetworkImageProvider(
-              "https://imgs.search.brave.com/UKeCinJ7mFuiThmbPG5KyfouPYFz00NjIBKbeIk7q78/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/ZnJlZS1waG90by9k/b2N0b3Itd2Vhcmlu/Zy13aGl0ZS1jb2F0/LW1lZGl1bS1zaG90/XzIzLTIxNDk4NDQ1/NzkuanBnP3NlbXQ9/YWlzX2h5YnJpZCZ3/PTc0MA",
-            ),
+            radius: 36,
+            backgroundImage: CachedNetworkImageProvider(doctor['profileImage']),
           ),
-          const SizedBox(width: 16), // Increased horizontal spacing
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,13 +404,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                   maxLines: 1,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Text(
                       doctor['specialization'],
                       style: const TextStyle(
-                        fontSize: 12, // Increased font size
+                        fontSize: 12,
                         color: Colors.grey,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -402,7 +422,6 @@ class _HomePageState extends State<HomePage> {
                         const Icon(Icons.star, color: Colors.amber, size: 14),
                         Text(
                           '${doctor['rating'] ?? "N/A"}',
-                          // Display rating or "N/A"
                           style: const TextStyle(
                             fontSize: 10,
                             color: Color(0xFF00171F),
@@ -411,7 +430,6 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(width: 8),
                         Text(
                           '(${doctor['rating'] ?? 0} reviews)',
-                          // Display review count or 0
                           style: const TextStyle(
                             fontSize: 10,
                             color: Colors.grey,
@@ -421,16 +439,55 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Contact: ${doctor['contact'] ?? "N/A"}', // Display contact
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF00171F),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () async {
+                    final phoneNumber = doctor['contact'];
+                    if (phoneNumber != null) {
+                      final cleanedPhone = phoneNumber.replaceAll(
+                        RegExp(r'\D'),
+                        '',
+                      );
+                      final whatsappUrl = Uri.parse(
+                        "https://wa.me/$cleanedPhone",
+                      );
+                      if (await canLaunchUrl(whatsappUrl)) {
+                        await launchUrl(
+                          whatsappUrl,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("WhatsApp is not installed."),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Contact: ${doctor['contact'] ?? "N/A"}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF00171F),
+                    ),
                   ),
                 ),
               ],
             ),
+          ),
+          // ADDED ARROW ICON AND NAVIGATION
+          IconButton(
+            icon: const Icon(Icons.arrow_forward_ios, color: Color(0xFF007EA7)),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/doctorDetails', // Define this route
+                arguments: doctor, // Pass the doctor data
+              );
+            },
           ),
         ],
       ),

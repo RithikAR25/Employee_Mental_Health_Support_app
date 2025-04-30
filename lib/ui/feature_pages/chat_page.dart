@@ -250,7 +250,7 @@ class _ChatPageState extends State<ChatPage> {
           children: <Widget>[
             CircleAvatar(
               radius: 30,
-              backgroundColor: Color(0xFFF0F0F5),
+              backgroundColor: const Color(0xFFF0F0F5),
               backgroundImage: CachedNetworkImageProvider(
                 group['icon'] ??
                     "https://cdn-icons-png.flaticon.com/128/10117/10117308.png",
@@ -271,12 +271,13 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    group['lastMessage']?['text'] ?? "No messages yet",
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  if (isUserGroup) // Conditionally show last message for user's groups
+                    Text(
+                      group['lastMessage']?['text'] ?? "No messages yet",
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
@@ -295,7 +296,7 @@ class _ChatPageState extends State<ChatPage> {
             if (!isMember)
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF007ea7),
+                  backgroundColor: const Color(0xFF007ea7),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -365,14 +366,16 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F5),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'Chats',
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             color: Color(0xFF00171F),
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0.8,
         bottom: PreferredSize(

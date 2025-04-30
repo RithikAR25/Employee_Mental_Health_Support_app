@@ -187,14 +187,16 @@ class _ArticlePageState extends State<ArticlePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F5),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           'For You',
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             color: Color(0xFF00171F),
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0.8,
       ),

@@ -3,6 +3,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'edit_profile_page.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -87,17 +89,49 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _navigateToEditProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(userData: _userDetails),
+      ),
+    ).then((_) {
+      _loadUserProfile();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Your Profile',
-          style: TextStyle(color: Color(0xFF00171F)),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
-        backgroundColor: Color(0xFF007EA7),
+        backgroundColor: const Color(0xFF007EA7),
         iconTheme: const IconThemeData(color: Color(0xFF00171F)),
         elevation: 0.8,
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit') {
+                _navigateToEditProfile();
+              }
+            },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            color: Colors.white,
+
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit Profile'),
+                  ),
+                ],
+          ),
+        ],
       ),
       backgroundColor: const Color(0xFFF0F0F5),
       body:
@@ -111,38 +145,33 @@ class _ProfilePageState extends State<ProfilePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        if (_userName != null)
-                          Column(
-                            // <-- Modification: Added Column here
-                            children: [
-                              CircleAvatar(
-                                radius: MediaQuery.of(context).size.width * 0.2,
-                                backgroundImage:
-                                    _userAvatar != null
-                                        ? AssetImage(
-                                          'assets/avatars/$_userAvatar',
-                                        )
-                                        : const AssetImage(
-                                          'assets/avatars/avatar1.png',
-                                        ),
+                        Column(
+                          children: [
+                            CircleAvatar(
+                              radius: MediaQuery.of(context).size.width * 0.2,
+                              backgroundImage:
+                                  _userAvatar != null
+                                      ? AssetImage(
+                                        'assets/avatars/$_userAvatar',
+                                      )
+                                      : const AssetImage(
+                                        'assets/avatars/avatar1.png',
+                                      ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _userName ?? 'User Name',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF00171F),
                               ),
-                              const SizedBox(height: 16),
-                              // <-- Modified: width changed to height
-                              Text(
-                                _userName!,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF00171F),
-                                ),
-                              ),
-                            ],
-                          ), // <-- End of Column
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
                     _buildDetailRow('Email', _userDetails['email']),
                     _buildDetailRow('Name', _userDetails['name']),
                     _buildDetailRow('Location', _userDetails['location']),
@@ -161,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: ElevatedButton(
                         onPressed: () => _logout(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFED1A3B),
+                          backgroundColor: const Color(0xFFED1A3B),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -194,15 +223,11 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 30),
-          Expanded(
-            child: Align(
-              // <-- Modification: Added Align widget
-              alignment: Alignment.centerRight,
-              // <-- Modification: Align text to end (right)
-              child: Text(
-                value ?? 'Not specified',
-                style: const TextStyle(color: Color(0xFF00171F)),
-              ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              value ?? 'Not specified',
+              style: const TextStyle(color: Color(0xFF00171F)),
             ),
           ),
         ],

@@ -46,7 +46,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void initState() {
     super.initState();
     _loadMessages().then((_) {
-      _listenForNewMessages(); // 🔵 MODIFICATION: Start listening after loading messages
+      _listenForNewMessages();
     });
   }
 
@@ -85,7 +85,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           final senderId = message['senderId'] as String?;
 
           if (senderId == null || message['timestamp'] == null) {
-            continue; // Skip invalid messages
+            continue;
           }
 
           String senderName = await _getUserName(senderId);
@@ -122,7 +122,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
             final senderId = messageData['senderId'] as String?;
             if (senderId == null || messageData['timestamp'] == null) {
-              return; // Skip invalid messages
+              return;
             }
 
             String senderName = await _getUserName(senderId);
@@ -204,7 +204,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           (snapshot.value as Map)['senderId'] == currentUserId) {
         await messageRef.remove();
 
-        // 🟢 Remove locally
         setState(() {
           _messages.removeWhere((msg) => msg['messageId'] == messageId);
         });
@@ -220,13 +219,95 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
   }
 
+  Future<void> _exitGroup() async {
+    final String? currentUserId = _auth.currentUser?.uid;
+    if (currentUserId != null) {
+      final DatabaseReference groupMembersRef = _messagesRef.child(
+        'chat_groups/${widget.groupId}/members/$currentUserId',
+      );
+
+      try {
+        await groupMembersRef.remove();
+        if (context.mounted) {
+          Navigator.pop(context); // Go back to the previous screen
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You have exited the group.')),
+          );
+        }
+      } catch (error) {
+        print('Error exiting group: $error');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to exit the group. Please try again.'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showExitConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Exit Group?"),
+          content: const Text("Are you sure you want to leave this group?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Exit"),
+              onPressed: () {
+                _exitGroup();
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.groupName),
-        backgroundColor: Color(0xFF007EA7),
+        title: Text(
+          widget.groupName,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFFffffff),
+          ),
+        ),
+        backgroundColor: const Color(0xFF007EA7),
         elevation: 0.8,
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'exit') {
+                _showExitConfirmationDialog();
+              }
+            },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            color: Colors.white,
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'exit',
+                    child: Text('Exit Group'),
+                  ),
+                ],
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
       body: Column(
@@ -295,26 +376,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Widget _buildChatInput() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-      decoration: BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Row(
         children: <Widget>[
-          // // Attachment button
-          // IconButton(
-          //   icon: Icon(Icons.attach_file, color: Colors.grey[600]),
-          //   onPressed: () {
-          //     // Handle attachment
-          //   },
-          // ),
-
-          // // Emoji button
-          // IconButton(
-          //   icon: Icon(Icons.emoji_emotions_outlined, color: Colors.grey[600]),
-          //   onPressed: () {
-          //     // Handle emoji picker
-          //   },
-          // ),
-
-          // Text field
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -335,12 +399,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
             ),
           ),
-
-          // Send button (always visible)
           Padding(
             padding: const EdgeInsets.only(left: 4.0),
             child: IconButton(
-              icon: Icon(Icons.send, color: Color(0xFF007EA7)),
+              icon: const Icon(Icons.send, color: Color(0xFF007EA7)),
               onPressed: _sendMessage,
             ),
           ),

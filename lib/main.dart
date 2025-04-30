@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mental_health_support_app/ui/feature_pages/all_doctors_page.dart';
+import 'package:mental_health_support_app/ui/feature_pages/doctor_details_page.dart';
 
 import 'firebase_options.dart';
 import 'ui/feature_pages/profile_page.dart';
@@ -147,6 +149,8 @@ class _MyAppState extends State<MyApp> {
         // Define LoginScreen route
         '/home': (context) => FeaturePage(),
         '/profile': (context) => const ProfilePage(),
+        '/allDoctors': (context) => const AllDoctorsPage(),
+        '/doctorDetails': (context) => const DoctorDetailsPage(),
       },
     );
   }
