@@ -129,10 +129,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final DatabaseReference groupRef = _database.child(
       'chat_groups/$groupName/members/$userId',
     );
+    final DatabaseReference joinTimeRef = _database.child(
+      'member_join_times/$groupName/$userId',
+    );
     try {
       await groupRef.set(
         true,
       ); // Set the user ID to true to indicate membership
+      await joinTimeRef.set(ServerValue.timestamp); // Record join time
       print('User $userId added to group $groupName');
     } catch (e) {
       print('Error adding user $userId to group $groupName: $e');

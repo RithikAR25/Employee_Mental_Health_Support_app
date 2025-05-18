@@ -175,6 +175,11 @@ class _ChatPageState extends State<ChatPage> {
           .child('chat_groups/$groupId/members/$_currentUserId')
           .set(true);
 
+      // Add the join time
+      await _database
+          .child('member_join_times/$groupId/$_currentUserId')
+          .set(ServerValue.timestamp); // Use server timestamp for accuracy
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Successfully joined the group!')),
       );

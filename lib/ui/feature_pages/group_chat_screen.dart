@@ -225,9 +225,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final DatabaseReference groupMembersRef = _messagesRef.child(
         'chat_groups/${widget.groupId}/members/$currentUserId',
       );
+      final DatabaseReference joinTimeRef = _messagesRef.child(
+        'member_join_times/${widget.groupId}/$currentUserId',
+      );
 
       try {
         await groupMembersRef.remove();
+        await joinTimeRef.remove(); // Remove the join time
         if (context.mounted) {
           Navigator.pop(context); // Go back to the previous screen
           ScaffoldMessenger.of(context).showSnackBar(
