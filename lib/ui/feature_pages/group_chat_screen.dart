@@ -33,14 +33,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   List<Map<String, dynamic>> _messages = []; // Always sorted oldest to newest
-  Map<String, String> _userNamesCache = {};
+  // UPDATED: Cache now stores Map for name and avatar (filename)
+  Map<String, Map<String, String>> _userProfileCache = {};
   Set<String> _loadedMessageIds = {}; // To prevent duplicates
 
   bool _showScrollToBottomButton = false;
   bool _isAtBottom =
       false; // Tracks if the user is currently at the bottom of the chat
 
-  // ADDED: StreamSubscription to manage the real-time listener
+  String? _currentFloatingDate;
+  Timer? _floatingDateVisibilityTimer;
+  bool _isScrolling = false;
+
   StreamSubscription<DatabaseEvent>? _newMessagesSubscription;
 
   final List<Color> _userColors = [
@@ -62,22 +66,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   void initState() {
     super.initState();
-    // UPDATED: Await _loadInitialMessages() to ensure it completes
-    // before starting _listenForNewMessages().
     _loadUserJoinTime().then((_) async {
-      await _loadInitialMessages(); // Await this call
-      _listenForNewMessages(); // Then start listening for new messages
+      await _loadInitialMessages();
+      _listenForNewMessages();
     });
     _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
-    // UPDATED: Cancel the StreamSubscription when the widget is disposed
     _newMessagesSubscription?.cancel();
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     _messageController.dispose();
+    _floatingDateVisibilityTimer?.cancel();
     super.dispose();
   }
 
@@ -88,14 +90,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     bool atBottom = (maxScroll - currentScroll).abs() <= delta;
 
-    // Only update if the state actually changes to avoid unnecessary rebuilds
     if (_isAtBottom != atBottom) {
       setState(() {
         _isAtBottom = atBottom;
       });
     }
 
-    // Show button when not at bottom and there is scrollable content
     if (!atBottom &&
         !_showScrollToBottomButton &&
         _scrollController.hasClients &&
@@ -109,15 +109,106 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       });
     }
 
-    // Trigger load more if scrolled to the top and not already loading
     if (_scrollController.position.pixels ==
             _scrollController.position.minScrollExtent &&
         !_isLoadingMore &&
         _messages.isNotEmpty &&
         _oldestTimestamp != null) {
-      // UPDATED: Uncommented this line to enable lazy loading
       _loadOlderMessages();
     }
+
+    // --- Floating Date Indicator Logic ---
+    if (_scrollController.hasClients && _messages.isNotEmpty) {
+      int firstVisibleItemIndex = 0;
+      if (_scrollController.position.pixels >
+          _scrollController.position.minScrollExtent) {
+        firstVisibleItemIndex =
+            (_scrollController.position.pixels / 60).floor();
+        if (_isLoadingMore) {
+          firstVisibleItemIndex = max(0, firstVisibleItemIndex - 1);
+        }
+      }
+
+      if (firstVisibleItemIndex < _messages.length &&
+          firstVisibleItemIndex >= 0) {
+        final message = _messages[firstVisibleItemIndex];
+        final timestamp = message['timestamp'] as int;
+        final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        final formattedDate = _formatDateForFloatingIndicator(date);
+
+        if (_currentFloatingDate != formattedDate) {
+          setState(() {
+            _currentFloatingDate = formattedDate;
+          });
+        }
+      } else {
+        if (_currentFloatingDate != null) {
+          setState(() {
+            _currentFloatingDate = null;
+          });
+        }
+      }
+
+      _floatingDateVisibilityTimer?.cancel();
+      _isScrolling = true;
+      _floatingDateVisibilityTimer = Timer(
+        const Duration(milliseconds: 700),
+        () {
+          if (mounted) {
+            setState(() {
+              _isScrolling = false;
+            });
+          }
+        },
+      );
+    } else {
+      if (_currentFloatingDate != null || _isScrolling) {
+        setState(() {
+          _currentFloatingDate = null;
+          _isScrolling = false;
+        });
+      }
+    }
+  }
+
+  String _formatDateForFloatingIndicator(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+
+    if (date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day) {
+      return 'Today';
+    } else if (date.year == yesterday.year &&
+        date.month == yesterday.month &&
+        date.day == yesterday.day) {
+      return 'Yesterday';
+    } else if (date.year == now.year) {
+      return DateFormat('MMMM d').format(date);
+    } else {
+      return DateFormat('MMMM d,EEEE').format(date);
+    }
+  }
+
+  // UPDATED: Now fetches both name and avatar (filename)
+  Future<Map<String, String>> _getUserProfile(String userId) async {
+    if (_userProfileCache.containsKey(userId)) {
+      return _userProfileCache[userId]!;
+    }
+    final snapshot = await _usersRef.child(userId).get();
+
+    String name = 'Unknown User';
+    String avatar = ''; // Default empty
+
+    if (snapshot.value != null) {
+      final userData = snapshot.value as Map<dynamic, dynamic>;
+      name = (userData['name'] as String?) ?? 'Unknown User';
+      avatar = (userData['avatar'] as String?) ?? '';
+    }
+
+    _userProfileCache[userId] = {'name': name, 'avatar': avatar};
+    return _userProfileCache[userId]!;
   }
 
   Future<void> _loadUserJoinTime() async {
@@ -135,25 +226,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         print(
           "Warning: Join time not found for user $currentUserId in group ${widget.groupId}. Setting to 0.",
         );
-        // If join time is not found, assume they joined at a very early time
-        // to load all available messages up to the pageSize.
         _userJoinTime = 0;
       }
     }
-  }
-
-  Future<String> _getUserName(String userId) async {
-    if (_userNamesCache.containsKey(userId)) {
-      return _userNamesCache[userId]!;
-    }
-    final snapshot = await _usersRef.child(userId).child('name').get();
-
-    if (snapshot.value != null) {
-      final name = snapshot.value as String;
-      _userNamesCache[userId] = name;
-      return name;
-    }
-    return 'Unknown User';
   }
 
   Future<void> _loadInitialMessages() async {
@@ -164,7 +239,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       return;
     }
 
-    // Clear current state to ensure fresh load when re-entering or on initial load
     setState(() {
       _messages.clear();
       _loadedMessageIds.clear();
@@ -175,8 +249,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       Query query = _messagesRef
           .child('group_messages/${widget.groupId}')
           .orderByChild('timestamp')
-          .startAt(_userJoinTime!) // Only messages from when the user joined
-          .limitToLast(_pageSize); // Get the most recent X messages
+          .startAt(_userJoinTime!)
+          .limitToLast(_pageSize);
 
       final snapshot = await query.get();
       if (snapshot.value != null) {
@@ -191,37 +265,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           final senderId = message['senderId'] as String?;
           final timestamp = message['timestamp'] as int?;
 
-          // Filter out invalid messages or those already processed (though initial clear helps)
           if (senderId == null || timestamp == null) continue;
 
-          String senderName = await _getUserName(senderId);
+          final userProfile = await _getUserProfile(senderId);
           fetchedMessages.add({
             'messageId': messageId,
             'senderId': senderId,
-            'senderName': senderName,
+            'senderName': userProfile['name'],
+            'avatar': userProfile['avatar'], // UPDATED: Use 'avatar'
             'text': message['text'],
             'timestamp': timestamp,
           });
-          _loadedMessageIds.add(messageId); // Add to set of loaded IDs
+          _loadedMessageIds.add(messageId);
         }
 
-        // Sort fetched messages by timestamp in ascending order (oldest to newest)
         fetchedMessages.sort(
           (a, b) => (a['timestamp'] as int).compareTo(b['timestamp'] as int),
         );
 
         setState(() {
-          _messages.addAll(fetchedMessages); // Add new messages to the end
+          _messages.addAll(fetchedMessages);
           if (_messages.isNotEmpty) {
             _oldestTimestamp = _messages.first['timestamp'] as int?;
           }
         });
-        for (var msg in fetchedMessages) {
-          print(
-            "📨 Initial Loaded Message | ${msg['senderName']} | ${msg['timestamp']} | ${msg['text']}",
-          );
-        }
-        //Scroll to the bottom after initial load, ensuring UI is built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToBottom();
         });
@@ -241,7 +308,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _loadOlderMessages() async {
-    // Ensure that _oldestTimestamp is valid before attempting to load older messages
     if (_userJoinTime == null || _oldestTimestamp == null || _isLoadingMore)
       return;
 
@@ -250,16 +316,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     });
 
     try {
-      // Query messages strictly older than the current _oldestTimestamp,
-      // and also only from when the user joined.
       Query query = _messagesRef
           .child('group_messages/${widget.groupId}')
           .orderByChild('timestamp')
           .startAt(_userJoinTime!)
-          .endBefore(
-            _oldestTimestamp!,
-          ) // Get messages strictly BEFORE _oldestTimestamp
-          .limitToLast(_pageSize); // Fetch up to _pageSize older messages
+          .endBefore(_oldestTimestamp!)
+          .limitToLast(_pageSize);
 
       final snapshot = await query.get();
 
@@ -268,7 +330,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             snapshot.value as Map<dynamic, dynamic>;
 
         List<Map<String, dynamic>> fetchedMessages = [];
-        int newOldestTimestamp = _oldestTimestamp!; // Start with current oldest
+        int newOldestTimestamp = _oldestTimestamp!;
 
         for (final entry in messagesData.entries) {
           final messageId = entry.key;
@@ -276,36 +338,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           final senderId = message['senderId'] as String?;
           final timestamp = message['timestamp'] as int?;
 
-          // Skip if invalid or already loaded
           if (senderId == null ||
               timestamp == null ||
               _loadedMessageIds.contains(messageId)) {
             continue;
           }
 
-          String senderName = await _getUserName(senderId);
+          final userProfile = await _getUserProfile(senderId);
           fetchedMessages.add({
             'messageId': messageId,
             'senderId': senderId,
-            'senderName': senderName,
+            'senderName': userProfile['name'],
+            'avatar': userProfile['avatar'], // UPDATED: Use 'avatar'
             'text': message['text'],
             'timestamp': timestamp,
           });
 
-          _loadedMessageIds.add(messageId); // Add to loaded IDs
-          newOldestTimestamp = min(
-            newOldestTimestamp,
-            timestamp,
-          ); // Find the new oldest
+          _loadedMessageIds.add(messageId);
+          newOldestTimestamp = min(newOldestTimestamp, timestamp);
         }
 
-        // Sort fetched messages by timestamp in ascending order (oldest to newest)
         fetchedMessages.sort(
           (a, b) => (a['timestamp'] as int).compareTo(b['timestamp'] as int),
         );
 
         if (fetchedMessages.isEmpty) {
-          // No more older messages to load
           setState(() {
             _isLoadingMore = false;
           });
@@ -313,19 +370,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
 
         setState(() {
-          _messages.insertAll(
-            0,
-            fetchedMessages,
-          ); // Insert at the beginning of the list
-          _oldestTimestamp = newOldestTimestamp; // Update the oldest timestamp
+          _messages.insertAll(0, fetchedMessages);
+          _oldestTimestamp = newOldestTimestamp;
         });
-        for (var msg in fetchedMessages) {
-          print(
-            "⏪ Older Loaded Message | ${msg['senderName']} | ${msg['timestamp']} | ${msg['text']}",
-          );
-        }
-
-        // Maintain scroll position relative to the new content
         final double currentPosition = _scrollController.position.pixels;
         final double beforeLoadHeight =
             _scrollController.position.maxScrollExtent;
@@ -353,20 +400,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   void _listenForNewMessages() {
-    // UPDATED: Cancel any previous subscription to prevent multiple listeners
     _newMessagesSubscription?.cancel();
 
     final String? currentUserId = _auth.currentUser?.uid;
 
     if (currentUserId != null && _userJoinTime != null) {
-      // Calculate the starting timestamp for the new listener.
-      // It must be strictly greater than the latest message timestamp already loaded.
-      // If _messages is empty (e.g., initial load found no messages), listen from user's join time.
       final int startTimestamp =
           _messages.isEmpty
-              ? _userJoinTime! // Listen from user's join time if no messages loaded
-              : (_messages.last['timestamp'] as int) +
-                  1; // Listen for messages strictly newer
+              ? _userJoinTime!
+              : (_messages.last['timestamp'] as int) + 1;
 
       print("👂 Listening for new messages from timestamp: $startTimestamp");
 
@@ -382,49 +424,35 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               final senderId = messageData['senderId'] as String?;
               final timestamp = messageData['timestamp'] as int?;
 
-              print(
-                "Received onChildAdded: ${event.snapshot.key} at $timestamp",
-              );
-
-              // CRITICAL CHECK: Prevent duplicates by ensuring messageId is not already loaded
-              // Also ensure timestamp is within user's viewable history (_userJoinTime).
               if (senderId == null ||
                   timestamp == null ||
-                  timestamp <
-                      _userJoinTime! || // Message is older than user's join time
+                  timestamp < _userJoinTime! ||
                   _loadedMessageIds.contains(event.snapshot.key)) {
                 print(
                   "🚫 Skipping duplicate or invalid message: ${event.snapshot.key}",
                 );
-                return; // Skip if invalid, too old, or already loaded
+                return;
               }
 
-              String senderName = await _getUserName(senderId);
+              final userProfile = await _getUserProfile(senderId);
               setState(() {
                 _messages.add({
-                  // Add to the end of the list (maintaining chronological order)
                   'messageId': event.snapshot.key,
                   'senderId': senderId,
-                  'senderName': senderName,
+                  'senderName': userProfile['name'],
+                  'avatar': userProfile['avatar'], // UPDATED: Use 'avatar'
                   'text': messageData['text'],
                   'timestamp': timestamp,
                 });
-                _loadedMessageIds.add(event.snapshot.key!); // Mark as loaded
-                print(
-                  "✅ Added new message from listener: ${event.snapshot.key}",
-                );
+                _loadedMessageIds.add(event.snapshot.key!);
 
-                // Only scroll to bottom if the user is already near the bottom
-                // or if it's the current user's message.
                 if (_isAtBottom || senderId == currentUserId) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToBottom();
                   });
                 } else {
-                  // Show scroll-to-bottom button if not at bottom and new message arrives
                   if (!_showScrollToBottomButton) {
                     setState(() {
-                      // Call setState to update UI for the button
                       _showScrollToBottomButton = true;
                     });
                   }
@@ -438,9 +466,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent, // Scroll to bottom
+        _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut, // Smoother scrolling
+        curve: Curves.easeOut,
       );
     }
   }
@@ -462,7 +490,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'timestamp': timestamp,
         });
 
-        // Update the last message in chat_groups for display in group list
         final DatabaseReference groupRef = _messagesRef.child(
           'chat_groups/${widget.groupId}',
         );
@@ -476,8 +503,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         });
 
         _messageController.clear();
-        // The _listenForNewMessages will handle adding this message to the list
-        // and scrolling to the bottom if appropriate.
       }
     }
   }
@@ -497,7 +522,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         await messageRef.remove();
         setState(() {
           _messages.removeWhere((msg) => msg['messageId'] == messageId);
-          _loadedMessageIds.remove(messageId); // Also remove from loaded IDs
+          _loadedMessageIds.remove(messageId);
         });
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -535,9 +560,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
       try {
         await groupMembersRef.remove();
-        await joinTimeRef.remove(); // Remove the join time
+        await joinTimeRef.remove();
         if (context.mounted) {
-          Navigator.pop(context); // Go back to the previous screen
+          Navigator.pop(context);
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('You have exited the group.')),
@@ -574,7 +599,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               child: const Text("Exit"),
               onPressed: () {
                 _exitGroup();
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -619,116 +644,194 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ],
       ),
       backgroundColor: Colors.white,
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: Stack(
-              children: [
-                ListView.builder(
-                  controller: _scrollController,
-                  // itemCount: _messages.length + (_isLoadingMore && _messages.isNotEmpty ? 1 : 0),
-                  // Adjust itemCount if the loading indicator is shown at the top
-                  itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    // Show loading indicator at the very top when loading older messages
-                    if (_isLoadingMore && index == 0) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(),
+      body: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: Stack(
+                children: <Widget>[
+                  ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (_isLoadingMore && index == 0) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      final messageIndex = _isLoadingMore ? index - 1 : index;
+                      if (messageIndex >= 0 &&
+                          messageIndex < _messages.length) {
+                        final message = _messages[messageIndex];
+                        final bool isMe =
+                            message['senderId'] == _auth.currentUser?.uid;
+                        // Pass avatar filename to _buildChatMessage
+                        return _buildChatMessage(
+                          message,
+                          isMe,
+                          message['avatar'] as String?,
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                  if (_isScrolling && _currentFloatingDate != null)
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _currentFloatingDate!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      );
-                    }
-                    // Adjust index if loading indicator is present
-                    final messageIndex = _isLoadingMore ? index - 1 : index;
-                    if (messageIndex >= 0 && messageIndex < _messages.length) {
-                      final message = _messages[messageIndex];
-                      final bool isMe =
-                          message['senderId'] == _auth.currentUser?.uid;
-                      return _buildChatMessage(message, isMe);
-                    }
-                    return null;
-                  },
-                ),
-                if (_showScrollToBottomButton)
-                  Positioned(
-                    bottom: 20,
-                    right: 20,
-                    child: FloatingActionButton(
-                      mini: true,
-                      onPressed: () {
-                        _scrollToBottom();
-                        // Reset the button state once scrolled to bottom
-                        setState(() => _showScrollToBottomButton = false);
-                      },
-                      backgroundColor: const Color(0xFF007EA7),
-                      child: const Icon(
-                        Icons.arrow_downward,
-                        color: Colors.white,
                       ),
                     ),
-                  ),
-              ],
+
+                  if (_showScrollToBottomButton)
+                    Positioned(
+                      bottom: 20,
+                      right: 20,
+                      child: FloatingActionButton(
+                        mini: true,
+                        onPressed: () {
+                          _scrollToBottom();
+                          setState(() => _showScrollToBottomButton = false);
+                        },
+                        backgroundColor: const Color(0xFF007EA7),
+                        child: const Icon(
+                          Icons.arrow_downward,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          _buildChatInput(),
-        ],
+            _buildChatInput(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildChatMessage(Map<String, dynamic> message, bool isMe) {
+  Widget _buildChatMessage(
+    Map<String, dynamic> message,
+    bool isMe,
+    String? avatarFilename,
+  ) {
+    final bool showAvatar = !isMe;
+    Widget avatarWidget = const SizedBox(width: 36, height: 36);
+
+    if (showAvatar) {
+      ImageProvider? avatarImage;
+      if (avatarFilename != null && avatarFilename.isNotEmpty) {
+        avatarImage = AssetImage('assets/avatars/$avatarFilename');
+      }
+
+      avatarWidget = Padding(
+        padding: const EdgeInsets.only(right: 8.0, bottom: 4.0),
+        child: CircleAvatar(
+          radius: 18,
+          backgroundColor: Colors.grey[300],
+          backgroundImage: avatarImage,
+          child:
+              avatarImage == null
+                  ? Icon(Icons.person, color: Colors.grey[600], size: 24)
+                  : null,
+        ),
+      );
+    }
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () {
-          if (isMe) {
-            _showDeleteConfirmationDialog(message['messageId']);
-          }
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          padding: const EdgeInsets.all(8),
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).size.width * 0.75, // Limit bubble width
-          ),
-          decoration: BoxDecoration(
-            color:
-                isMe
-                    ? Colors.blue.shade300
-                    : _getUserColor(message['senderId']),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (!isMe && message['senderName'] != null)
-                Text(
-                  message['senderName']!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment:
+              isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: <Widget>[
+            if (showAvatar) avatarWidget,
+            GestureDetector(
+              onLongPress: () {
+                if (isMe) {
+                  _showDeleteConfirmationDialog(message['messageId']);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.75,
                 ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  message['text'] ?? '',
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                decoration: BoxDecoration(
+                  color:
+                      isMe
+                          ? Colors.blue.shade300
+                          : _getUserColor(message['senderId']),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!isMe && message['senderName'] != null)
+                      Text(
+                        message['senderName']!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            message['text'] ?? '',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('hh:mm a').format(
+                            DateTime.fromMillisecondsSinceEpoch(
+                              message['timestamp'],
+                            ),
+                          ),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Text(
-                  DateFormat('HH:mm').format(
-                    DateTime.fromMillisecondsSinceEpoch(message['timestamp']),
-                  ),
-                  style: const TextStyle(color: Colors.black54, fontSize: 10),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -760,11 +863,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 maxLines: 5,
                 minLines: 1,
                 keyboardType: TextInputType.multiline,
-                // Allow multiline input
                 textCapitalization: TextCapitalization.sentences,
-                // Capitalize first letter of sentence
                 onSubmitted: (text) {
-                  // Only send on submit if text is not empty, otherwise avoid new lines
                   if (text.isNotEmpty) {
                     _sendMessage();
                   }
