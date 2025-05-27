@@ -3,8 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import '../../utils/time_utils.dart';
 import 'group_chat_screen.dart';
 
 class ChatPage extends StatefulWidget {
@@ -288,16 +288,43 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(width: 12),
             if (isMember)
-              Text(
-                group['lastMessage']?['timestamp'] != null
-                    ? formatTimestamp(
-                      DateTime.fromMillisecondsSinceEpoch(
-                        group['lastMessage']['timestamp'],
+              group['lastMessage']?['timestamp'] != null
+                  ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    // Aligns content to the right
+                    mainAxisSize: MainAxisSize.min,
+                    // Ensures the column takes minimum space
+                    children: [
+                      Text(
+                        DateFormat('MMM d').format(
+                          // For month and day, e.g., "May 27"
+                          DateTime.fromMillisecondsSinceEpoch(
+                            group['lastMessage']['timestamp'],
+                          ),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
-                    )
-                    : " ",
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
+                      Text(
+                        DateFormat('hh:mm a').format(
+                          // For time with AM/PM, e.g., "05:02 PM"
+                          DateTime.fromMillisecondsSinceEpoch(
+                            group['lastMessage']['timestamp'],
+                          ),
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  )
+                  : const Text(
+                    " ", // Return an empty Text widget if no timestamp
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
             if (!isMember)
               ElevatedButton(
                 style: ElevatedButton.styleFrom(

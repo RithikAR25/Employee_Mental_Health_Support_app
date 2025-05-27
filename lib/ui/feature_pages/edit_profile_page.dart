@@ -45,6 +45,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'avatar3.png',
     'avatar4.png',
     'avatar5.png',
+    'avatar6.png',
+    'avatar7.png',
+    'avatar8.png',
+    'avatar9.png',
+    'avatar10.png',
   ];
 
   final DatabaseReference _database = FirebaseDatabase.instance.ref();

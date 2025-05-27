@@ -45,6 +45,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'avatar3.png',
     'avatar4.png',
     'avatar5.png',
+    'avatar6.png',
+    'avatar7.png',
+    'avatar8.png',
+    'avatar9.png',
+    'avatar10.png',
   ];
 
   final FirebaseAuth _auth = FirebaseAuth.instance;

@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   String _userName =
       "User"; // Default user name  -  Will be fetched from Firebase
   String _userAvatar =
-      "avatar1.png"; // Default avatar - Will be fetched from Firebase
+      "profile.png"; // Default avatar - Will be fetched from Firebase
 
   @override
   void initState() {

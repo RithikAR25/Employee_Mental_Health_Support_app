@@ -137,6 +137,13 @@ class _MyAppState extends State<MyApp> {
           // Default font
           labelSmall: GoogleFonts.cambo(), // Default font
         ),
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+          color: const Color(0xFFed1a3b),
+          // Default color for all CircularProgressIndicators
+          circularTrackColor: const Color(0xFF3a769d),
+          // Default background color
+          strokeCap: StrokeCap.round,
+        ),
       ),
       home: const SplashScreen(),
       // Set SplashScreen as the initial screen
